@@ -1145,8 +1145,21 @@ func AddSafeDirectories() error {
 		return nil
 	}
 
-	dirs := strings.Split(safeDirectories, ",")
-	for _, path := range dirs {
+	addSafeDir := func(path string) error {
+		cmd := exec.Command("git", "config", "--global", "--add", "safe.directory", path)
+		_, err := executil.Run(cmd)
+		return err
+	}
+
+	if safeDirectories == "*" {
+		return addSafeDir("*")
+	}
+
+	for _, path := range strings.Split(safeDirectories, ",") {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
+		}
 		fileInfo, err := os.Stat(path)
 		if err != nil {
 			return fmt.Errorf("invalid path provided for git safe directory: %w", err)
@@ -1154,9 +1167,7 @@ func AddSafeDirectories() error {
 		if !fileInfo.IsDir() {
 			return fmt.Errorf("path %q is not a directory", path)
 		}
-		cmd := exec.Command("git", "config", "--global", "--add", "safe.directory", path)
-		_, err = executil.Run(cmd)
-		if err != nil {
+		if err := addSafeDir(path); err != nil {
 			return err
 		}
 	}
