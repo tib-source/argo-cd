@@ -24368,6 +24368,20 @@ metadata:
   name: argocd-cmd-params-cm
 ---
 apiVersion: v1
+data:
+  .gitconfig: |-
+    # Placeholder for git configuration.
+    # For example, to mark all repositories as safe:
+    # [safe]
+    #   directory = *
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-git-config-cm
+    app.kubernetes.io/part-of: argocd
+  name: argocd-git-config-cm
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
@@ -25056,12 +25070,6 @@ spec:
               key: reposerver.git.request.timeout
               name: argocd-cmd-params-cm
               optional: true
-        - name: ARGOCD_GIT_SAFE_DIRECTORIES
-          valueFrom:
-            configMapKeyRef:
-              key: reposerver.git.safe.directories
-              name: argocd-cmd-params-cm
-              optional: true
         - name: ARGOCD_GRPC_MAX_SIZE_MB
           valueFrom:
             configMapKeyRef:
@@ -25126,6 +25134,9 @@ spec:
           name: helm-working-dir
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
+        - mountPath: /home/argocd/.gitconfig
+          name: git-config
+          subPath: .gitconfig
       initContainers:
       - command:
         - /bin/cp
@@ -25159,6 +25170,10 @@ spec:
       - configMap:
           name: argocd-gpg-keys-cm
         name: gpg-keys
+      - configMap:
+          name: argocd-git-config-cm
+          optional: true
+        name: git-config
       - emptyDir: {}
         name: gpg-keyring
       - emptyDir: {}
